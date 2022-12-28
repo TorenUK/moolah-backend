@@ -10,12 +10,17 @@ import {
 import {nanoid} from 'nanoid'
 import argon2 from 'argon2'
 import {Account} from '@model/account.model'
+import {
+  sendVerificationEmail,
+  generateEmailVerificationHTML
+} from '@modules/email'
+import {toBadRequestError} from '@domain/Error'
 
 class EmailConfig {
   @Prop({default: false, required: true})
   isEmailVerified: boolean
 
-  @Prop({default: () => nanoid(), required: true, unique: true })
+  @Prop({default: '', unique: true})
   verificationCode: string
 }
 
@@ -26,6 +31,21 @@ class EmailConfig {
   const hash = await argon2.hash(this.password)
 
   this.password = hash
+
+  return
+})
+// pre-save hook to send email verification code
+@pre<User>('save', async function () {
+  if (this.emailConfig.isEmailVerified) return
+
+  this.emailConfig.verificationCode = nanoid()
+
+  // sendVerificationEmail({
+  //   from: 'moolah.guru',
+  //   to: this.email,
+  //   subject: 'Verify your email',
+  //   html: generateEmailVerificationHTML(this.emailConfig.verificationCode)
+  // })
 
   return
 })
@@ -75,6 +95,22 @@ export class User {
     return this.findOne({email})
       .lean()
       .then((user) => user)
+  }
+
+  public static async verifyEmailConfirmationCode(
+    this: ReturnModelType<typeof User>,
+    code: string
+  ) {
+    const user = await this.findOne({'emailConfig.verificationCode': code})
+
+    if (!user) throw new Error('Invalid email verification code')
+
+    if (user.emailConfig.isEmailVerified)
+      throw new Error('Email already verified')
+
+    user.emailConfig.isEmailVerified = true
+
+    return await user.save()
   }
 }
 

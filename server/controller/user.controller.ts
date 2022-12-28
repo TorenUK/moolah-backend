@@ -21,9 +21,29 @@ export const createUser = async (
       // todo send email if already exists
     }
 
-    const user = await createUserService(body)
+    await createUserService(body)
 
     return res.send('User successfully created')
+  } catch (err) {
+    return next(toUnexpectedError(err))
+  }
+}
+
+export const verifyEmailConfirmationCode = async (
+  req: Request<{}, {}, CreateUserInput>,
+  res: Response,
+  next: NextFunction
+) => {
+  const {code} = req.query as {code: string}
+
+  try {
+    const user = await UserModel.verifyEmailConfirmationCode(code)
+
+    if (!user) {
+      return next(toBadRequestError('Invalid email verification code'))
+    }
+
+    return res.send('Email successfully verified')
   } catch (err) {
     return next(toUnexpectedError(err))
   }
