@@ -10,7 +10,10 @@ export const createUserSchema = object({
     }),
     password: string({
       required_error: 'Password is required'
-    }).min(8, 'Password too short -- 8 characters required'),
+    })
+      .min(8, 'Password too short -- 8 characters required')
+      .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+      .regex(/\d/, 'Password must contain at least one number'),
     passwordConfirmation: string({
       required_error: 'Password confirmation is required'
     }),
