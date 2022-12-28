@@ -3,6 +3,7 @@ export type User = {
     firstName: string
     lastName: string
     email: string
+    emailConfig: UserEmailConfig
     phone: number
     DateOfBirth: string
     address: Address
@@ -32,4 +33,10 @@ export type Occupation = {
     jobTitle: string
     yearsExperience: number
     grossAnnualIncome: number
+}
+
+export type UserEmailConfig = {
+    address: string
+    isEmailVerified: boolean
+    verificationCode: string
 }

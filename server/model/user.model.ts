@@ -11,6 +11,14 @@ import {nanoid} from 'nanoid'
 import argon2 from 'argon2'
 import {Account} from '@model/account.model'
 
+class EmailConfig {
+  @Prop({default: false, required: true})
+  isEmailVerified: boolean
+
+  @Prop({default: () => nanoid(), required: true, unique: true })
+  verificationCode: string
+}
+
 // pre-save hook to hash passwords
 @pre<User>('save', async function () {
   if (!this.isModified('password')) return
@@ -42,14 +50,11 @@ export class User {
   @Prop({required: true})
   password: string
 
-  @Prop({required: true, default: () => nanoid()})
-  verificationCode: string
-
   @Prop()
   passwordResetCode: string | null
 
-  @Prop({default: false})
-  verified: boolean
+  @Prop({default: {}})
+  emailConfig: EmailConfig
 
   @Prop({default: {}})
   public account: Account
