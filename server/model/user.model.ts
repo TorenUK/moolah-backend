@@ -16,6 +16,18 @@ import {
 } from '@modules/email'
 import {toBadRequestError} from '@domain/Error'
 
+type Notification = {
+  id: string
+  type: string
+  isRead: boolean
+  message: string
+  createdAt: Date
+}
+
+class Notifications {
+  @Prop({default: [], required: true})
+  notifications: Notification[]
+}
 class EmailConfig {
   @Prop({default: false, required: true})
   isEmailVerified: boolean
@@ -75,6 +87,9 @@ export class User {
 
   @Prop({default: {}})
   emailConfig: EmailConfig
+
+  @Prop({default: {}, required: true})
+  notifications: Notifications
 
   @Prop({default: {}})
   public account: Account
