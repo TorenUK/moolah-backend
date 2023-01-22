@@ -36,7 +36,8 @@ const config = {
 
   aws: {
     region: process.env.AWS_DEFAULT_REGION || 'eu-west-2',
-    key: process.env.AWS_SECRET_TEST
+    key: process.env.AWS_ACCESS_KEY,
+    secret_key: process.env.AWS_SECRET_ACCESS_KEY
   },
 
   smtp: {
@@ -54,6 +55,10 @@ const config = {
     mongo_db: envVars.MONGO_DB,
     mongo_servers: envVars.MONGO_SERVERS,
     mongo_password: envVars.MONGO_PASSWORD
+  },
+
+  mail: {
+    from: process.env.MAIL_ADDRESS || 'support@moolah.guru'
   }
 }
 
