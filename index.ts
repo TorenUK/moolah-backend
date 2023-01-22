@@ -6,12 +6,13 @@ import cors from 'cors'
 import routes from '@routes/index.route'
 import configureMongoose from '@db/configure.mongoose'
 import http from 'http'
-import {Server} from 'socket.io'
-import {handleError} from '@middleware/handle.error'
+import { Server } from 'socket.io'
+import { handleError } from '@middleware/handle.error'
+import { worker } from './server/workers/bullmq.worker'
 
 const app = express()
 const server = http.createServer(app)
-const io = new Server(server, {cors: {origin: '*'}})
+const io = new Server(server, { cors: { origin: '*' } })
 
 io.on('connection', (socket) => {
   console.log('a user connected')
@@ -23,7 +24,7 @@ io.on('message', (msg) => {
 })
 
 app.use(bodyParser.json())
-app.use(bodyParser.urlencoded({extended: true}))
+app.use(bodyParser.urlencoded({ extended: true }))
 
 app.use(helmet())
 app.use(cors())
@@ -39,4 +40,15 @@ app.listen(config.port, () => {
   console.info(`server started on port ${config.port} (${config.env})`)
 })
 // socket.io server
-server.listen(3333)
+server.listen(config.socketPort, () => {
+  console.info(
+    `socket.io server started on port ${config.socketPort} (${config.env})`
+  )
+})
+
+worker.on('completed', (job) => {
+  console.log(`Job ${job.id} completed!`)
+})
+worker.on('failed', (job, err) => {
+  console.log(`Job ${job.id} failed!`, err)
+})

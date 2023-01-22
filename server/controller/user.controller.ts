@@ -1,8 +1,8 @@
-import {Request, Response, NextFunction} from 'express'
-import {CreateUserInput} from '@validation/user.schema'
-import {createUserService} from '@services/user.service'
+import { Request, Response, NextFunction } from 'express'
+import { CreateUserInput } from '@validation/user.schema'
+import { createUserService } from '@services/user.service'
 import UserModel from '@model/user.model'
-import {toBadRequestError, toUnexpectedError} from '@domain/Error'
+import { toBadRequestError, toUnexpectedError } from '@domain/Error'
 
 export const createUser = async (
   req: Request<{}, {}, CreateUserInput>,
@@ -11,7 +11,7 @@ export const createUser = async (
 ) => {
   const body = req.body
 
-  const {email} = body
+  const { email } = body
 
   try {
     const exists = await UserModel.checkExists(email)
@@ -34,7 +34,7 @@ export const verifyEmailConfirmationCode = async (
   res: Response,
   next: NextFunction
 ) => {
-  const {code} = req.query as {code: string}
+  const { code } = req.query as { code: string }
 
   try {
     const user = await UserModel.verifyEmailConfirmationCode(code)

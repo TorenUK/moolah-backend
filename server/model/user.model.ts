@@ -7,14 +7,11 @@ import {
   DocumentType,
   ReturnModelType
 } from '@typegoose/typegoose'
-import {nanoid} from 'nanoid'
+import { nanoid } from 'nanoid'
 import argon2 from 'argon2'
-import {Account} from '@model/account.model'
-import {
-  sendVerificationEmail,
-  generateEmailVerificationHTML
-} from '@modules/email'
-import {toBadRequestError} from '@domain/Error'
+import { Account } from '@model/account.model'
+import { sendVerificationEmail } from '@services/mail.service'
+import config from '@app/config'
 
 type Notification = {
   id: string
@@ -25,15 +22,18 @@ type Notification = {
 }
 
 class Notifications {
-  @Prop({default: [], required: true})
+  @Prop({ default: [], required: true })
   notifications: Notification[]
 }
 class EmailConfig {
-  @Prop({default: false, required: true})
+  @Prop({ default: false, required: true })
   isEmailVerified: boolean
 
-  @Prop({default: '', unique: true})
+  @Prop({ default: () => nanoid(), unique: true })
   verificationCode: string
+
+  @Prop({ default: () => new Date(Date.now() + 600000), required: true })
+  expiration: Date
 }
 
 // pre-save hook to hash passwords
@@ -50,14 +50,14 @@ class EmailConfig {
 @pre<User>('save', async function () {
   if (this.emailConfig.isEmailVerified) return
 
-  this.emailConfig.verificationCode = nanoid()
-
-  // sendVerificationEmail({
-  //   from: 'moolah.guru',
-  //   to: this.email,
-  //   subject: 'Verify your email',
-  //   html: generateEmailVerificationHTML(this.emailConfig.verificationCode)
-  // })
+  sendVerificationEmail({
+    name: this.firstName,
+    email: this.email,
+    verificationCode: this.emailConfig.verificationCode,
+    from: config.mail.from,
+    to: this.email,
+    subject: 'Verify your email'
+  })
 
   return
 })
@@ -70,28 +70,28 @@ class EmailConfig {
   }
 })
 export class User {
-  @Prop({lowercase: true, required: true, unique: true})
+  @Prop({ lowercase: true, required: true, unique: true })
   email: string
 
-  @Prop({required: true})
+  @Prop({ required: true })
   firstName: string
 
-  @Prop({required: true})
+  @Prop({ required: true })
   lastName: string
 
-  @Prop({required: true})
+  @Prop({ required: true })
   password: string
 
   @Prop()
   passwordResetCode: string | null
 
-  @Prop({default: {}})
+  @Prop({ default: {} })
   emailConfig: EmailConfig
 
-  @Prop({default: {}, required: true})
+  @Prop({ default: {}, required: true })
   notifications: Notifications
 
-  @Prop({default: {}})
+  @Prop({ default: {} })
   public account: Account
 
   async validatePassword(this: DocumentType<User>, candidatePassword: string) {
@@ -107,7 +107,7 @@ export class User {
     this: ReturnModelType<typeof User>,
     email: string
   ) {
-    return this.findOne({email})
+    return this.findOne({ email })
       .lean()
       .then((user) => user)
   }
@@ -116,14 +116,19 @@ export class User {
     this: ReturnModelType<typeof User>,
     code: string
   ) {
-    const user = await this.findOne({'emailConfig.verificationCode': code})
+    const user = await this.findOne({ 'emailConfig.verificationCode': code })
 
     if (!user) throw new Error('Invalid email verification code')
 
+    // if (user.emailConfig.expiration && user.emailConfig.expiration < new Date())
+    //   throw new Error('verification code expired')
+    // // todo
     if (user.emailConfig.isEmailVerified)
       throw new Error('Email already verified')
 
     user.emailConfig.isEmailVerified = true
+
+    user.emailConfig.verificationCode = ''
 
     return await user.save()
   }
