@@ -38,7 +38,7 @@ const configure = (config: MongoConfig): void => {
     credentials += '@'
   }
 
-  mongoUri = `mongodb://${credentials}${config.mongo_servers}`
+  mongoUri = `mongodb://mongodb:27017/moolahDB`
 
   mongoose.connection.on('error', (error) =>
     console.log('unable to connect to mongodb', {error})
