@@ -29,6 +29,29 @@ export const createUser = async (
   }
 }
 
+export const login = async ( req: Request<{}, {}, CreateUserInput>,
+  res: Response,
+  next: NextFunction
+  ) => {
+  const body = req.body
+
+  const { email, password } = body
+
+  try {
+
+    const user = await UserModel.login(email, password)
+
+    if (!user) {
+      return next(toBadRequestError('Invalid credentials'))
+    }
+
+    return res.send('User successfully logged in')
+
+  } catch (err) {
+    return next(toUnexpectedError(err))
+  }
+}
+
 export const verifyEmailConfirmationCode = async (
   req: Request<{}, {}, CreateUserInput>,
   res: Response,

@@ -132,6 +132,23 @@ export class User {
 
     return await user.save()
   }
+  
+  public static async login(
+    this: ReturnModelType<typeof User>,
+    email: string,
+    password: string
+  ) {
+
+    const user = await this.findOne({ email })
+
+    if (!user) throw new Error('Invalid email or password')
+
+    const isPasswordValid = await user.validatePassword(password)
+
+    if (!isPasswordValid) throw new Error('Invalid email or password')
+
+    return user
+  }
 }
 
 const UserModel = getModelForClass(User)
